@@ -6,15 +6,17 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.yt8492.grpcchat.R
+import com.yt8492.grpcchat.domain.model.ChatMessage
 import com.yt8492.grpcchat.infra.api.ChatService
 import com.yt8492.grpcchat.infra.domain.impl.repository.ChatRepositoryImpl
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
+@ExperimentalCoroutinesApi
 class MainActivity : AppCompatActivity() {
 
     private val chatRepository = ChatRepositoryImpl(ChatService())
@@ -29,8 +31,15 @@ class MainActivity : AppCompatActivity() {
             addItemDecoration(dividerItemDecoration)
             adapter = chatAdapter
         }
+        val sendMessageFlow = channelFlow<ChatMessage> {
+            sendButton.setOnClickListener {
+                val message = ChatMessage(messageEditText.text.toString())
+                channel.offer(message)
+            }
+            awaitClose()
+        }.conflate()
         lifecycleScope.launch {
-            chatRepository.flowChatMessage()
+            chatRepository.flowChatMessage(sendMessageFlow)
                 .flowOn(Dispatchers.Main)
                 .catch { e ->
                     e.printStackTrace()
