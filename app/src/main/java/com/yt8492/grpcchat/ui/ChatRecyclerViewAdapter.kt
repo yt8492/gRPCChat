@@ -8,8 +8,6 @@ import com.yt8492.grpcchat.domain.model.ChatMessage
 
 class ChatRecyclerViewAdapter : ListAdapter<ChatMessage, ChatViewHolder>(CALLBACK) {
 
-    private val messages = mutableListOf<ChatMessage>()
-
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int
@@ -20,12 +18,11 @@ class ChatRecyclerViewAdapter : ListAdapter<ChatMessage, ChatViewHolder>(CALLBAC
     )
 
     override fun onBindViewHolder(holder: ChatViewHolder, position: Int) {
-        holder.bind(messages[position])
+        holder.bind(getItem(position))
     }
 
     fun add(message: ChatMessage) {
-        messages.add(message)
-        submitList(messages)
+        submitList(currentList + message)
     }
 
     companion object {
