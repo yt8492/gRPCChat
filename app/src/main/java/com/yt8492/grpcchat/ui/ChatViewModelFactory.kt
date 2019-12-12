@@ -3,8 +3,9 @@ package com.yt8492.grpcchat.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.yt8492.grpcchat.domain.service.ChatService
+import javax.inject.Inject
 
-class ChatViewModelFactory(
+class ChatViewModelFactory @Inject constructor(
     private val chatService: ChatService
 ) : ViewModelProvider.NewInstanceFactory() {
 

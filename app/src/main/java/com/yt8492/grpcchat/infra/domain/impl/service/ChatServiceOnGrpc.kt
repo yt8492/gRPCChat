@@ -1,20 +1,21 @@
 package com.yt8492.grpcchat.infra.domain.impl.service
 
-import android.util.Log
 import com.yt8492.grpcchat.domain.model.ChatMessage
+import com.yt8492.grpcchat.domain.service.ChatService
 import com.yt8492.grpcchat.infra.api.ChatApi
 import com.yt8492.grpcchat.protobuf.MessageRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
+import javax.inject.Inject
 
 @ExperimentalCoroutinesApi
-class ChatServiceImpl(
+class ChatServiceOnGrpc @Inject constructor(
     private val chatApi: ChatApi
-) : com.yt8492.grpcchat.domain.service.ChatService {
+) : ChatService {
     override fun flowChatMessage(
-        send: Flow<ChatMessage>
+        request: Flow<ChatMessage>
     ): Flow<ChatMessage> = channelFlow<ChatMessage> {
         val observer = chatApi.observeChatMessage(
             onNext = {
@@ -24,16 +25,17 @@ class ChatServiceImpl(
                 throw it
             },
             onCompleted = {
-                Log.d("hogehoge", "onCompleted")
+                channel.close()
             }
         )
-        send.collect {
+        request.collect {
             val req = MessageRequest.newBuilder()
                 .setMessage(it.value)
                 .build()
             observer.onNext(req)
         }
         awaitClose()
-    }.flowOn(Dispatchers.IO)
+    }
+        .flowOn(Dispatchers.IO)
         .buffer()
 }

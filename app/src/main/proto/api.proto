@@ -13,9 +13,6 @@ message MessageResponse {
     string message = 1;
 }
 
-message Empty {}
-
 service ChatService {
     rpc ExecStream (stream MessageRequest) returns (stream MessageResponse);
-    rpc HealthCheck (Empty) returns (Empty);
 }

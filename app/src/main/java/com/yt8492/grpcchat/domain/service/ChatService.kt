@@ -4,5 +4,5 @@ import com.yt8492.grpcchat.domain.model.ChatMessage
 import kotlinx.coroutines.flow.Flow
 
 interface ChatService {
-    fun flowChatMessage(send: Flow<ChatMessage>): Flow<ChatMessage>
+    fun flowChatMessage(request: Flow<ChatMessage>): Flow<ChatMessage>
 }
