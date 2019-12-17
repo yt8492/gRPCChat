@@ -8,6 +8,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @ExperimentalCoroutinesApi
@@ -17,22 +19,26 @@ class ChatServiceOnGrpc @Inject constructor(
     override fun flowChatMessage(
         request: Flow<ChatMessage>
     ): Flow<ChatMessage> = channelFlow<ChatMessage> {
-        val observer = chatApi.observeChatMessage(
-            onNext = {
-                channel.offer(ChatMessage(it))
-            },
-            onError = {
-                throw it
-            },
-            onCompleted = {
-                channel.close()
-            }
-        )
-        request.collect {
-            val req = MessageRequest.newBuilder()
-                .setMessage(it.value)
-                .build()
-            observer.onNext(req)
+        withContext(Dispatchers.IO) {
+            val observer = chatApi.observeChatMessage(
+                onNext = {
+                    launch {
+                        channel.send(ChatMessage(it))
+                    }
+                },
+                onError = {
+                    throw it
+                },
+                onCompleted = {
+                    channel.close()
+                }
+            )
+            request.onEach {
+                val req = MessageRequest.newBuilder()
+                    .setMessage(it.value)
+                    .build()
+                observer.onNext(req)
+            }.launchIn(this)
         }
         awaitClose()
     }
