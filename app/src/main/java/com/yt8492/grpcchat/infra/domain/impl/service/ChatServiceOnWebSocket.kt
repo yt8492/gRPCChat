@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.net.Socket
 import javax.inject.Inject
@@ -21,9 +22,10 @@ class ChatServiceOnWebSocket @Inject constructor() : ChatService {
             val serverWriter = clientSocket.getOutputStream().bufferedWriter()
             val socketReader = clientSocket.getInputStream().bufferedReader()
             socketReader.lineSequence()
+                .asFlow()
                 .onEach {
-                    channel.offer(ChatMessage(it))
-                }
+                    channel.send(ChatMessage(it))
+                }.launchIn(this)
             request.onEach {
                 serverWriter.write("${it.value}\n")
                 serverWriter.flush()
